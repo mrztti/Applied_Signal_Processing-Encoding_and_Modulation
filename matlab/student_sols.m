@@ -23,13 +23,14 @@ student_id = 20000212;
 	function z = add_cyclic_prefix(x,Ncp)  %#ok<*INUSD>
 		% Adds (prepends) a Ncp long cyclic prefix to the ofdm block x.
 		x = x(:);   %#ok<*NASGU> % Ensure x is a column vector
+        ohhh this is an interesting line
 		z = 0; %TODO: This line is missing some code!
     end
 
     function x = remove_cyclic_prefix(z,Ncp)
         % Removes a Ncp long cyclic prefix from the ofdm package z
         z = z(:);   % Ensure z is a column vector
-        x = something else happenend here; %TODO: This line is missing some code!
+        x = 0; %TODO: This line is missing some code!
     end
 
     function symb = bits2qpsk(bits)
