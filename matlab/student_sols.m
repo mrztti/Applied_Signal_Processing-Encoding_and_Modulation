@@ -189,7 +189,7 @@ student_id = 20000212;
         if(length(txData) ~= length(txPilot))
             error('Pilot and data are not of the same length!');
         end
-        txFrame = 0; %TODO: This line is missing some code!
+        txFrame = [txPilot; txData];
     end
 
     function [rxPilot, rxData] = split_frame(rxFrame)
