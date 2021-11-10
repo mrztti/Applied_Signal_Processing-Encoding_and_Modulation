@@ -58,15 +58,8 @@ student_id = 20000212;
             error('bits must be of even length');
         end
         
-        % init array
-        out = zeros(length(bits)/2, 1);
-        
-        % map values using given QPSK mapping
-        for k = 1:(size(bits)/2)
-            out(k) = sqrt(1/2) * (bits(2*k-1) + bits(2*k) * 1i);
-        end
-        
-        symb = out;
+        % apply QPSK mapping
+        symb = sqrt(1/2) * (bits(1:2:end) + bits(2:2:end) * 1i);
     end
 
     function bits  = qpsk2bits(x)
@@ -81,8 +74,8 @@ student_id = 20000212;
         % first bit corresponds to the real part of the symbol while the
         % second bit corresponds to the imaginary part of the symbol.
 
-        bits(1:2:end) = 0; %TODO: This line is missing some code!
-        bits(2:2:end) = 0; %TODO: This line is missing some code!
+        bits(1:2:end) = real(x) >= 0;
+        bits(2:2:end) = imag(x) >= 0;
         
         % Ensure output is of correct type
         % zero value -> logical zero
