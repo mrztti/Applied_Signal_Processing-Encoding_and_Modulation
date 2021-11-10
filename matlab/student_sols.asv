@@ -74,8 +74,8 @@ student_id = 20000212;
         % first bit corresponds to the real part of the symbol while the
         % second bit corresponds to the imaginary part of the symbol.
 
-        bits(1:2:end) = real(x) >= 0; %TODO: This line is missing some code!
-        bits(2:2:end) = imag(x) >= 0; %TODO: This line is missing some code!
+        bits(1:2:end) = real(x) >= 0;
+        bits(2:2:end) = imag(x) >= 0;
         
         % Ensure output is of correct type
         % zero value -> logical zero
@@ -132,7 +132,7 @@ student_id = 20000212;
         h = h(:);
         
         % Convert bits to QPSK symbols
-        x = 0; %TODO: This line is missing some code!
+        x = bits2qpsk(tx);  % <--- ADDED
         
         symbs.tx = x;   % Store transmitted symbols for later
         
@@ -140,10 +140,12 @@ student_id = 20000212;
         N = length(x);
 
         % Create OFDM time-domain block using IDFT
-        z = 0; %TODO: This line is missing some code!
+        % <--- ADDED: Based on the hermitian transpose formula given in
+        % lecture
+        z = 1/N * ctranspose(transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1)) * x; 
 
         % Add cyclic prefix to create OFDM package
-        zcp = 0; %TODO: This line is missing some code!
+        zcp = add_cyclic_prefix(z, N_cp); % <--- ADDED
 
         % Send package over channel
         ycp = simulate_baseband_channel(zcp, h, snr, sync_err);
@@ -153,10 +155,10 @@ student_id = 20000212;
         ycp = ycp(1:N+N_cp); 
 
         % Remove cyclic prefix
-        y = 0; %TODO: This line is missing some code!
+        y = remove_cyclic_prefix(ycp, N_cp); % <--- ADDED
 
         % Convert to frequency domain using DFT
-        r = 0; %TODO: This line is missing some code!
+        r = transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1) * y; % <--- ADDED
         
         symbs.rx_pe = r; % Store symbols for later
 

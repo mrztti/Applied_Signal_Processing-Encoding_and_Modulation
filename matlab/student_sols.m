@@ -132,7 +132,7 @@ student_id = 20000212;
         h = h(:);
         
         % Convert bits to QPSK symbols
-        x = 0; %TODO: This line is missing some code!
+        x = bits2qpsk(tx);  % <--- ADDED
         
         symbs.tx = x;   % Store transmitted symbols for later
         
@@ -140,10 +140,12 @@ student_id = 20000212;
         N = length(x);
 
         % Create OFDM time-domain block using IDFT
-        z = 0; %TODO: This line is missing some code!
+        % <--- ADDED: Based on the hermitian transpose formula given in
+        % lecture
+        z = 1/N * ctranspose(transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1)) * x; 
 
         % Add cyclic prefix to create OFDM package
-        zcp = 0; %TODO: This line is missing some code!
+        zcp = add_cyclic_prefix(z, N_cp); % <--- ADDED
 
         % Send package over channel
         ycp = simulate_baseband_channel(zcp, h, snr, sync_err);
@@ -153,17 +155,17 @@ student_id = 20000212;
         ycp = ycp(1:N+N_cp); 
 
         % Remove cyclic prefix
-        y = 0; %TODO: This line is missing some code!
+        y = remove_cyclic_prefix(ycp, N_cp); % <--- ADDED
 
         % Convert to frequency domain using DFT
-        r = 0; %TODO: This line is missing some code!
+        r = transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1) * y; % <--- ADDED
         
         symbs.rx_pe = r; % Store symbols for later
 
         % Remove effect of channel by equalization. Here, we can do this by
         % dividing r (which is in the frequency domain) by the channel gain (also
         % in the frequency domain).
-        r_eq = 0; %TODO: This line is missing some code!
+        r_eq = r / (transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1) * h); %TODO: Not completely sure of this line!!
         
         symbs.rx_e = r_eq; %Store symbols for later
 
@@ -172,7 +174,7 @@ student_id = 20000212;
         evm = norm(x - r_eq)/sqrt(N);
 
         % Convert the recieved symsbols to bits
-        rx = 0; %TODO: This line is missing some code!
+        rx = qpsk2bits(r_eq); %TODO: This line is missing some code!
 
         % Calculate the bit error rate (BER).
         % This indicates the relative number of bit errors.
