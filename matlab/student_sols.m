@@ -174,7 +174,7 @@ student_id = 20000212;
         evm = norm(x - r_eq)/sqrt(N);
 
         % Convert the recieved symsbols to bits
-        rx = qpsk2bits(r_eq); %TODO: This line is missing some code!
+        rx = qpsk2bits(r_eq); % <--- ADDED
 
         % Calculate the bit error rate (BER).
         % This indicates the relative number of bit errors.
