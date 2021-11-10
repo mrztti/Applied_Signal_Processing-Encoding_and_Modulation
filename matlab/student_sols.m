@@ -199,8 +199,8 @@ student_id = 20000212;
             error('Vector z must have an even number of elements'); 
         end
         N = length(rxFrame);
-        rxPilot = 0; %TODO: This line is missing some code!
-        rxData = 0; %TODO: This line is missing some code!
+        rxPilot = rxFrame(1:N/2);
+        rxData = rxFrame(N/2 + 1:N);
     end
 
     function [rx, evm, ber, symbs] = sim_ofdm_unknown_channel(tx, h, N_cp, snr, sync_err)
