@@ -182,7 +182,7 @@ student_id = 20000212;
         % dividing r (which is in the frequency domain) by the channel gain (also
         % in the frequency domain).
         d = DFT_padded_to(h, N);
-        r_eq = r ./ d; %TODO: Not completely sure of this line!!
+        r_eq = r ./ d;
         
         symbs.rx_e = r_eq; %Store symbols for later
 
@@ -279,7 +279,7 @@ student_id = 20000212;
         
         % Convert bits to QPSK symbols
         x.p = bits2qpsk(tx.p);
-        x.d = bits2qpsk(tx.p);
+        x.d = bits2qpsk(tx.d);
 
         symbs.tx = x.d;   % Store transmitted data symbols for later
 
@@ -318,11 +318,11 @@ student_id = 20000212;
         r.d = DFT(y.d, N);
         symbs.rx_pe = r.d; % Store symbols for later
         
-        % Esimate channel
-        H = r.p / x.p;
+        % Estimate channel
+        H = r.p ./ x.p;
 
         % Remove effect of channel on the data package by equalization.
-        r_eq = r.d / H;
+        r_eq = r.d ./ H;
 
         symbs.rx_e = r_eq; %Store symbols for later
 
