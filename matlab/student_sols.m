@@ -154,7 +154,7 @@ student_id = 20000212;
         
         % Number of symbols in message
         N = length(x);
-
+        Nh=length(h);
         % Create OFDM time-domain block using IDFT
         % <--- ADDED: Based on the hermitian transpose formula given in
         % lecture
@@ -181,9 +181,15 @@ student_id = 20000212;
         % Remove effect of channel by equalization. Here, we can do this by
         % dividing r (which is in the frequency domain) by the channel gain (also
         % in the frequency domain).
-        d = DFT_padded_to(h, N);
-        r_eq = r ./ d;
         
+        for k=1:N
+            for t=1:Nh
+                H(k)=sum(h(t)*exp(-1i*2*pi*k*(t-1)));
+            end
+        end
+        for k=1:N
+        r_eq(k)=r(k)/H(k);
+        end
         symbs.rx_e = r_eq; %Store symbols for later
 
         % Calculate the quality of the received symbols.
