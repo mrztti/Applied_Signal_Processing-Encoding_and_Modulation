@@ -4,19 +4,6 @@ function [funs, student_id] = student_sols()
 
 % ADDITIONAL FUNCTIONS
 
-    function idft = IDFT(x, N)
-        idft = 1/N * ctranspose(transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1)) * x;
-    end
-
-    function dft = DFT(x, N)
-        dft = transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1) * x;
-    end
-
-    function padded = DFT_padded_to(h, N)
-        x = [h;zeros(N-length(h), 1)];
-        padded = DFT(x, N);
-    end
-
 
 % ----------------------------------------
 %               STEP 1
@@ -154,11 +141,10 @@ student_id = 20000212;
         
         % Number of symbols in message
         N = length(x);
-
         % Create OFDM time-domain block using IDFT
         % <--- ADDED: Based on the hermitian transpose formula given in
         % lecture
-        z = IDFT(x, N); 
+        z = ifft(x, N); 
 
         % Add cyclic prefix to create OFDM package
         zcp = add_cyclic_prefix(z, N_cp); % <--- ADDED
@@ -174,18 +160,18 @@ student_id = 20000212;
         y = remove_cyclic_prefix(ycp, N_cp); % <--- ADDED
 
         % Convert to frequency domain using DFT
-        r = DFT(y, N); % <--- ADDED
+        r = fft(y, N); % <--- ADDED
         
         symbs.rx_pe = r; % Store symbols for later
 
         % Remove effect of channel by equalization. Here, we can do this by
         % dividing r (which is in the frequency domain) by the channel gain (also
         % in the frequency domain).
-        d = DFT_padded_to(h, N);
+        d = fft(h, N);
         r_eq = r ./ d;
         
         symbs.rx_e = r_eq; %Store symbols for later
-
+        r_eq=(r_eq(1:length(x)));
         % Calculate the quality of the received symbols.
         % The error vector magnitude (EVM) is one useful metric.
         evm = norm(x - r_eq)/sqrt(N);
@@ -290,8 +276,8 @@ student_id = 20000212;
         end
 
         % Create OFDM time-domain block using IDFT
-        z.p = IDFT(x.p, N);
-        z.d = IDFT(x.d, N);
+        z.p = ifft(x.p, N);
+        z.d = ifft(x.d, N);
 
         % Add cyclic prefix to create OFDM package
         zcp.p = add_cyclic_prefix(z.p, N_cp);
@@ -314,8 +300,8 @@ student_id = 20000212;
         y.d = remove_cyclic_prefix(ycp.d, N_cp);
 
         % Convert to frequency domain using DFT
-        r.p = DFT(y.p, N);
-        r.d = DFT(y.d, N);
+        r.p = fft(y.p, N);
+        r.d = fft(y.d, N);
         symbs.rx_pe = r.d; % Store symbols for later
         
         % Estimate channel
