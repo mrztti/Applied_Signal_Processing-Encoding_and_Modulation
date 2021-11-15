@@ -2,9 +2,6 @@
 function [funs, student_id] = student_sols()
 %STUDENT_SOLS Contains all student solutions to problems.
 
-% ADDITIONAL FUNCTIONS
-
-
 % ----------------------------------------
 %               STEP 1
 % ----------------------------------------
@@ -579,10 +576,6 @@ funs.frame_interpolate = @frame_interpolate;
 funs.frame_decimate = @frame_decimate;
 funs.frame_modulate = @frame_modulate;
 funs.sim_ofdm_audio_channel = @sim_ofdm_audio_channel;
-
-funs.DFT = @DFT;
-funs.IDFT = @IDFT;
-
 
 % This file will return a structure with handles to the functions you have
 % implemented. You can call them if you wish, for example:
