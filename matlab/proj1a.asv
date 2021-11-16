@@ -87,12 +87,12 @@ funs = student_sols();
 N = 272;         % Number of OFDM (QPSK) symbols to transmit.   
 N_cp = 0;        % Length of cyclic prefix
 snr = inf;       % Receiver side SNR [dB]
-sync_err = 0;    % Negative values imply early frame sync
+sync_err = 1;    % Negative values imply early frame sync
 channel_known = true;   %Set true to use the known channel, false to use the unknown channel
 
 % Plot settings
 set(0,'DefaultFigureVisible','off'); % Do not show created plots
-tasknr = '1a';   % Current task number. Used for the filename of saved graphics
+tasknr = '1d_+1';   % Current task number. Used for the filename of saved graphics
 
 % Text to send, must correspond to at least N OFDM symbols
 tx_str = ['Alice: Would you tell me, please, which way I ought to go from here? ' ...
@@ -164,16 +164,16 @@ else
     % Draw a constellation plot of the recieved symbols, pre- and post-equalization
     % Recieved symbols are drawn in varying sizes so symbols in repeated
     % locations will be visible
-
+    figure;
+    f = gca;
+    set(f,'fontsize',13)   % Size of text in the plot
     figure(2);
     plot_constallation(symbs.tx, symbs.rx_pe);
     title('Pre-equalization symbol constellation')
-    set(gca,'fontsize',15)   % Size of text in the plot
 
     figure(3);
     plot_constallation(symbs.tx, symbs.rx_e);
     title('Post-equalization symbol constellation');
-    set(gca,'fontsize',15)   % Size of text in the plot
     
     cd 'Graphics'
     exportgraphics(figure(2),append(tasknr,'_','Pre-equalization.pdf'),'ContentType','vector')
