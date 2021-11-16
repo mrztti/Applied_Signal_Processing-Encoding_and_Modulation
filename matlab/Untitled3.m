@@ -71,7 +71,7 @@ format short eng
 apply_tests();
 
 % Load student-written functions
-funs = student_sols();
+funs = student_sols1();
 
 % ----------------------------------------------------------------------
 %                           NOTE!
@@ -115,24 +115,13 @@ pilot = string2bits(pilot_str);
 
 % Define a baseband channel
 
-%h = zeros(60,1); h(1) = 1;   % Ideal
+h = zeros(60,1); h(1) = 1;   % Ideal
 %h = zeros(60,1); h(1) = 0.5; % Ideal, scaled magnitude
 %h = zeros(60,1); h(1) = exp(1j*1/2);    % Ideal, phase shift by 1/2 radian (~28 degrees)
-h = 0.8.^(0:59)';            % LP model
+%h = 0.8.^(0:59)';            % LP model
 %h = zeros(60,1); h(1) = 0.5; h(9) = 0.5; % Multipath (2 paths)
 %h = randn(60,1);             % Random Gaussian 
 
-% Plot the channel response
-figure(1);
-subplot(2,1,1);
-title('Channel response');
-plot(abs(fft(h, N)));
-xlabel('k');
-ylabel('|H(k)|');
-subplot(2,1,2);
-plot(angle(fft(h, N)));
-xlabel('k');
-ylabel('arg(H(k))');
 
 
 % Utility function to remove non-printable characters from a string
@@ -141,31 +130,20 @@ clean_str = @(str) regexprep(str, '[^ -~]+', '_');
 % Simulate baseband OFDM communication
 
 if channel_known
-   [rx, evm, ber, symbs] = funs.sim_ofdm_known_channel(tx, h, N_cp, snr, sync_err); 
+   [rx, evm, ber, symbs,y,r,r_eq] = funs.sim_ofdm_known_channel(tx, h, N_cp, snr, sync_err); 
 else
     tx_s.d = tx;
     tx_s.p = pilot;
     [rx, evm, ber, symbs] = funs.sim_ofdm_unknown_channel(tx_s, h, N_cp, snr, sync_err);
 end
-
-if length(rx) <= 1
-    warning('Implement sim_ofdm_known_channel/sim_ofdm_unknown_channel!');
-else
-    % Convert the recieved bits to a string, replacing non-printable characters
-    % with an underscore
     rx_str = clean_str(bits2string(rx));
 
     fprintf('Transmitted: ''%s''\nRecieved:    ''%s''\n', tx_str, rx_str);
     fprintf('EVM: %.3g, BER: %.3g\n', evm, ber);
 
-    % Draw a constellation plot of the recieved symbols, pre- and post-equalization
-    % Recieved symbols are drawn in varying sizes so symbols in repeated
-    % locations will be visible
-    figure(2);
-    plot_constallation(symbs.tx, symbs.rx_pe);
-    title('Pre-equalization symbol constellation');
+if length(rx) <= 1
+    warning('Implement sim_ofdm_known_channel/sim_ofdm_unknown_channel!');
+else
 
-    figure(3);
-    plot_constallation(symbs.tx, symbs.rx_e);
-    title('Post-equalization symbol constellation');
+plot(1:length(r_eq),real(r_eq))
 end
