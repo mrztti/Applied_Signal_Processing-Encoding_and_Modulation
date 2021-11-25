@@ -330,6 +330,29 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 	* vector of up to length elements. */
 	
 	/* TODO: Add code from here...*/
+	//NULL checks
+	if (prxMes==NULL|prxPilot==NULL||ptxPilot==NULL||pEqualized==NULL||hhat_conj==NULL){
+		return;
+	}
+
+	//Calculate first conjugate
+	float* conj = calloc(2 * length, sizeof(float));
+	if (conj==NULL){
+		free(conj);
+		conj == NULL;
+		return;
+	}
+
+	//h-hat
+	arm_cmplx_conj_f32(ptxPilot, conj, length);
+	arm_cmplx_mult_cmplx_f32(conj, prxPilot, pTmp, length);
+	arm_cmplx_conj_f32(pTmp, hhat_conj, length);
+
+	//Equalize
+	arm_cmplx_mult_cmplx_f32(prxMes, hhat_conj, pEqualized, length);
+
+	free(conj);
+	conj = NULL;
 
 	/* ...to here */
 #endif
