@@ -86,10 +86,10 @@ funs = student_sols();
 % project report.
 
 N = 272;         % Number of OFDM (QPSK) symbols to transmit.   
-N_cp = 0;        % Length of cyclic prefix
+N_cp = 0;       % Length of cyclic prefix
 snr = inf;       % Receiver side SNR [dB]
-sync_err =0;    % Negative values imply early frame sync
-channel_known = true;   %Set true to use the known channel, false to use the unknown channel
+sync_err =-50;    % Negative values imply early frame sync
+channel_known = false;   %Set true to use the known channel, false to use the unknown channel
 
 % Text to send, must correspond to at least N OFDM symbols
 tx_str = ['Alice: Would you tell me, please, which way I ought to go from here? ' ...
@@ -145,7 +145,7 @@ if channel_known
 else
     tx_s.d = tx;
     tx_s.p = pilot;
-    [rx, evm, ber, symbs] = funs.sim_ofdm_unknown_channel(tx_s, h, N_cp, snr, sync_err);
+    [rx, evm, ber, symbs,H] = funs.sim_ofdm_unknown_channel(tx_s, h, N_cp, snr, sync_err);
 end
 
 if length(rx) <= 1

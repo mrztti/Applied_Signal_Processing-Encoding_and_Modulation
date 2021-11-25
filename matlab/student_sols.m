@@ -205,7 +205,7 @@ student_id = 20000212;
         rxData = rxFrame(N/2 + 1:N);
     end
 
-    function [rx, evm, ber, symbs] = sim_ofdm_unknown_channel(tx, h, N_cp, snr, sync_err)
+    function [rx, evm, ber, symbs,H] = sim_ofdm_unknown_channel(tx, h, N_cp, snr, sync_err)
         % Simulate OFDM signal transmission/reception over an unknown
         % channel.
         %
@@ -355,10 +355,10 @@ student_id = 20000212;
         
         % Upsample by a factor L, i.e. insert L-1 zeros after each original
         % sample
-        zup(1:L:end) = 0; %TODO: This line is missing some code!
+        zup(1:L:end) =x(1:N); %TODO: This line is missing some code!
         
         % Apply the LP filter to the upsampled (unfiltered) signal.
-        z = 0; %TODO: This line is missing some code!
+        z = conv(zup,hlp); %TODO: This line is missing some code!
     end
 
     function z = frame_decimate(x,L,hlp)
@@ -384,10 +384,10 @@ student_id = 20000212;
         hlp = hlp(:);
         
         % Apply the lowpass filter to avoid aliasing when decimating
-        xf = 0; %TODO: This line is missing some code!
+        xf = conv(x,hlp); %TODO: This line is missing some code!
         
         % Downsample by keeping samples [1, 1+L, 1+2*L, ...]
-        z = 0; %TODO: This line is missing some code!
+        z = xf(1:L:end); %TODO: This line is missing some code!
     end
 
     function z = frame_modulate(x, theta)
@@ -409,7 +409,7 @@ student_id = 20000212;
        
        % Modulate x by multiplying the samples with the complex exponential
        % exp(i * 2 * pi * theta * n)
-       z = 0; %TODO: This line is missing some code!
+       z= x.*exp(1i*2*pi*theta*n); %TODO: This line is missing some code!
     end
 
     function [rx, evm, ber, symbs] = sim_ofdm_audio_channel(tx, N_cp, snr, sync_err, f_s, f_c, L)
@@ -477,8 +477,8 @@ student_id = 20000212;
         tx.p = tx.p(:);
         
         % Convert bits to QPSK symbols
-        x.p = 0; %TODO: This line is missing some code!
-        x.d = 0; %TODO: This line is missing some code!
+        x.p =bits2qpsk(tx.p); %TODO: This line is missing some code!
+        x.d =bits2qpsk(tx.d); %TODO: This line is missing some code!
 
         symbs.tx = x.d;   % Store transmitted data symbols for later
 
@@ -489,11 +489,11 @@ student_id = 20000212;
         end
 
         % Create OFDM time-domain block using IDFT
-        z.p = 0; %TODO: This line is missing some code!
-        z.d = 0; %TODO: This line is missing some code!
+        z.p = ifft(x.p); %TODO: This line is missing some code!
+        z.d = ifft(x.d); %TODO: This line is missing some code!
 
         % Add cyclic prefix to create OFDM package
-        zcp.p = 0; %TODO: This line is missing some code!
+        zcp.p = add; %TODO: This line is missing some code!
         zcp.d = 0; %TODO: This line is missing some code!
         
         % Concatenate the messages

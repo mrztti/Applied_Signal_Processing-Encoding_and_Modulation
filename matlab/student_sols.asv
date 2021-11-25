@@ -2,17 +2,6 @@
 function [funs, student_id] = student_sols()
 %STUDENT_SOLS Contains all student solutions to problems.
 
-% ADDITIONAL FUNCTIONS
-
-    function idft = IDFT(x, N)
-        idft = 1/N * ctranspose(transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1)) * x;
-    end
-
-    function dft = DFT(x, N)
-        dft = transpose(exp(-1i * 2*pi / N * (0:N-1))).^ (0:N-1) * x;
-    end
-
-
 % ----------------------------------------
 %               STEP 1
 % ----------------------------------------
@@ -149,11 +138,10 @@ student_id = 20000212;
         
         % Number of symbols in message
         N = length(x);
-
         % Create OFDM time-domain block using IDFT
         % <--- ADDED: Based on the hermitian transpose formula given in
         % lecture
-        z = IDFT(x, N); 
+        z = ifft(x, N); 
 
         % Add cyclic prefix to create OFDM package
         zcp = add_cyclic_prefix(z, N_cp); % <--- ADDED
@@ -169,17 +157,18 @@ student_id = 20000212;
         y = remove_cyclic_prefix(ycp, N_cp); % <--- ADDED
 
         % Convert to frequency domain using DFT
-        r = DFT(y, N); % <--- ADDED
+        r = fft(y, N); % <--- ADDED
         
         symbs.rx_pe = r; % Store symbols for later
 
         % Remove effect of channel by equalization. Here, we can do this by
         % dividing r (which is in the frequency domain) by the channel gain (also
         % in the frequency domain).
-        r_eq = r / DFT(h, N); %TODO: Not completely sure of this line!!
+        d = fft(h, N);
+        r_eq = r ./ d;
         
         symbs.rx_e = r_eq; %Store symbols for later
-
+        r_eq=(r_eq(1:length(x)));
         % Calculate the quality of the received symbols.
         % The error vector magnitude (EVM) is one useful metric.
         evm = norm(x - r_eq)/sqrt(N);
@@ -216,7 +205,7 @@ student_id = 20000212;
         rxData = rxFrame(N/2 + 1:N);
     end
 
-    function [rx, evm, ber, symbs] = sim_ofdm_unknown_channel(tx, h, N_cp, snr, sync_err)
+    function [rx, evm, ber, symbs,H] = sim_ofdm_unknown_channel(tx, h, N_cp, snr, sync_err)
         % Simulate OFDM signal transmission/reception over an unknown
         % channel.
         %
@@ -273,7 +262,7 @@ student_id = 20000212;
         
         % Convert bits to QPSK symbols
         x.p = bits2qpsk(tx.p);
-        x.d = bits2qpsk(tx.p);
+        x.d = bits2qpsk(tx.d);
 
         symbs.tx = x.d;   % Store transmitted data symbols for later
 
@@ -284,8 +273,8 @@ student_id = 20000212;
         end
 
         % Create OFDM time-domain block using IDFT
-        z.p = IDFT(x.p, N);
-        z.d = IDFT(x.d, N);
+        z.p = ifft(x.p, N);
+        z.d = ifft(x.d, N);
 
         % Add cyclic prefix to create OFDM package
         zcp.p = add_cyclic_prefix(z.p, N_cp);
@@ -308,15 +297,15 @@ student_id = 20000212;
         y.d = remove_cyclic_prefix(ycp.d, N_cp);
 
         % Convert to frequency domain using DFT
-        r.p = DFT(y.p, N);
-        r.d = DFT(y.d, N);
+        r.p = fft(y.p, N);
+        r.d = fft(y.d, N);
         symbs.rx_pe = r.d; % Store symbols for later
         
-        % Esimate channel
-        H = r.p / s.p; %TODO: This line is missing some code!
+        % Estimate channel
+        H = r.p ./ x.p;
 
         % Remove effect of channel on the data package by equalization.
-        r_eq = 0; %TODO: This line is missing some code!
+        r_eq = r.d ./ H;
 
         symbs.rx_e = r_eq; %Store symbols for later
 
@@ -325,7 +314,7 @@ student_id = 20000212;
         evm = norm(x.d - r_eq)/sqrt(N);
 
         % Convert the recieved symsbols to bits
-        rx = 0; %TODO: This line is missing some code!
+        rx = qpsk2bits(r_eq); %TODO: This line is missing some code!
 
         % Calculate the bit error rate (BER).
         % This indicates the relative number of bit errors.
@@ -366,10 +355,10 @@ student_id = 20000212;
         
         % Upsample by a factor L, i.e. insert L-1 zeros after each original
         % sample
-        zup(1:L:end) = 0; %TODO: This line is missing some code!
+        zup(1:L:end) =x(1:N); %TODO: This line is missing some code!
         
         % Apply the LP filter to the upsampled (unfiltered) signal.
-        z = 0; %TODO: This line is missing some code!
+        z = conv(zup,hlp); %TODO: This line is missing some code!
     end
 
     function z = frame_decimate(x,L,hlp)
@@ -395,10 +384,10 @@ student_id = 20000212;
         hlp = hlp(:);
         
         % Apply the lowpass filter to avoid aliasing when decimating
-        xf = 0; %TODO: This line is missing some code!
+        xf = conv(x,hlp); %TODO: This line is missing some code!
         
         % Downsample by keeping samples [1, 1+L, 1+2*L, ...]
-        z = 0; %TODO: This line is missing some code!
+        z = xf(1:L:end); %TODO: This line is missing some code!
     end
 
     function z = frame_modulate(x, theta)
@@ -420,7 +409,7 @@ student_id = 20000212;
        
        % Modulate x by multiplying the samples with the complex exponential
        % exp(i * 2 * pi * theta * n)
-       z = 0; %TODO: This line is missing some code!
+       z= x.*exp(1i*2*pi*theta*n); %TODO: This line is missing some code!
     end
 
     function [rx, evm, ber, symbs] = sim_ofdm_audio_channel(tx, N_cp, snr, sync_err, f_s, f_c, L)
@@ -488,7 +477,7 @@ student_id = 20000212;
         tx.p = tx.p(:);
         
         % Convert bits to QPSK symbols
-        x.p = 0; %TODO: This line is missing some code!
+        x.p = ; %TODO: This line is missing some code!
         x.d = 0; %TODO: This line is missing some code!
 
         symbs.tx = x.d;   % Store transmitted data symbols for later
@@ -587,7 +576,6 @@ funs.frame_interpolate = @frame_interpolate;
 funs.frame_decimate = @frame_decimate;
 funs.frame_modulate = @frame_modulate;
 funs.sim_ofdm_audio_channel = @sim_ofdm_audio_channel;
-
 
 % This file will return a structure with handles to the functions you have
 % implemented. You can call them if you wish, for example:
