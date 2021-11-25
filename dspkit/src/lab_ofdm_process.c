@@ -273,27 +273,11 @@ void cnvt_re_im_2_cmplx( float * pRe, float * pIm, float * pCmplx, int length ){
 		return;
 	}
 
-	// Alocate ouput array
-	float* out = calloc(2 * length, sizeof(float));
-	if (out == NULL){
-		free(out);
-		out == NULL;
-		return;
-	}
-
-	//Copy to array
 	int i;
 	for(i = 0; i < length; i++){
-		out[2*i] = pRe[i];
-		out[2*i + 1] = pIm[i];
+		pCmplx[2*i] = pRe[i];
+		pCmplx[2*i + 1] = pIm[i];
 	}
-
-	// Copy output
-	memcpy(pCmplx, out, 2*length);
-
-	free(out);
-	out == NULL;
-	
 	/* ...to here */
 #endif
 }
