@@ -276,7 +276,8 @@ void cnvt_re_im_2_cmplx( float * pRe, float * pIm, float * pCmplx, int length ){
 	// Alocate ouput array
 	float* out = calloc(2 * length, sizeof(float));
 	if (out == NULL){
-		pCmplx = NULL;
+		free(out);
+		out == NULL;
 		return;
 	}
 
