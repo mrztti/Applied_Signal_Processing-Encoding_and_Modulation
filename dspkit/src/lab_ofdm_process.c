@@ -315,7 +315,11 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 
 	//Calculate first conjugate
 	float* conj = calloc(2 * length, sizeof(float));
-	if 
+	if (conj==NULL){
+		free(conj);
+		conj == NULL;
+		return;
+	}
 
 
 	/* ...to here */
