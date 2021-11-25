@@ -321,6 +321,9 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 		return;
 	}
 
+	arm_cmplx_conj_f32(ptxPilot, conj, length);
+	
+
 
 	/* ...to here */
 #endif
