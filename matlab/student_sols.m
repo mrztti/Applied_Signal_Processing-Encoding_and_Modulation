@@ -409,7 +409,7 @@ student_id = 20000212;
        
        % Modulate x by multiplying the samples with the complex exponential
        % exp(i * 2 * pi * theta * n)
-       z= x.*exp(1i*2*pi*theta*n); %TODO: This line is missing some code!
+       z= x.*exp(1i*2*pi*theta*n); 
     end
 
     function [rx, evm, ber, symbs] = sim_ofdm_audio_channel(tx, N_cp, snr, sync_err, f_s, f_c, L)
@@ -477,10 +477,9 @@ student_id = 20000212;
         tx.p = tx.p(:);
         
         % Convert bits to QPSK symbols
-        x.p =bits2qpsk(tx.p); %TODO: This line is missing some code!
-        x.d =bits2qpsk(tx.d); %TODO: This line is missing some code!
-
-        symbs.tx = x.d;   % Store transmitted data symbols for later
+        x.p =bits2qpsk(tx.p); 
+        x.d =bits2qpsk(tx.d);
+        symbs.tx = x.d;   
 
         % Number of symbols in message
         N = length(x.d);
@@ -489,21 +488,22 @@ student_id = 20000212;
         end
 
         % Create OFDM time-domain block using IDFT
-        z.p = ifft(x.p); %TODO: This line is missing some code!
-        z.d = ifft(x.d); %TODO: This line is missing some code!
+        z.p = ifft(x.p,N); 
+        z.d = ifft(x.d,N); 
 
         % Add cyclic prefix to create OFDM package
-        zcp.p = add; %TODO: This line is missing some code!
-        zcp.d = 0; %TODO: This line is missing some code!
+        zcp.p = add_cyclic_prefix(z.p, N_cp); 
+        zcp.d = add_cyclic_prefix(z.d, N_cp); 
         
         % Concatenate the messages
-        tx_frame = 0; %TODO: This line is missing some code!
+        tx_frame = concat_packages(zcp.p, zcp.d); 
         
         % Increase the sample rate by interpolation
-        tx_frame_us = 0; %TODO: This line is missing some code!
+        tx_frame_us = frame_interpolate(tx_frame,L); 
         
         % Modulate the upsampled signal
-        tx_frame_mod = 0; %TODO: This line is missing some code!
+        theta=f_c/f_s;
+        tx_frame_mod = frame_modulate(tx_frame_us, theta); 
         
         % Discard the imaginary part of the signal for transmission over a
         % scalar channel (simulation of audio over air)
@@ -516,7 +516,7 @@ student_id = 20000212;
         rx_frame_raw = rx_frame_raw(rx_idx:rx_idx + length(tx_frame_final));
         
         % Demodulate to bring the signal back to the baseband
-        rx_frame_us = 0; %TODO: This line is missing some code!
+        rx_frame_us = frame_modulate(rx_frame_raw, -theta); %TODO: This line is missing some code!
         
         % Decimate the signal to bring the sample rate back to the original
         rx_frame = frame_decimate(rx_frame_us, L);
@@ -526,22 +526,22 @@ student_id = 20000212;
         
         % Split frame into packages
         ycp = struct();
-        [ycp.p, ycp.d] = 0; %TODO: This line is missing some code!
+        [ycp.p, ycp.d] = split_frame(rx_frame); 
         
         % Remove cyclic prefix
-        y.p = 0; %TODO: This line is missing some code!
-        y.d = 0; %TODO: This line is missing some code!
+        y.p = remove_cyclic_prefix(ycp.p, N_cp); 
+        y.d = remove_cyclic_prefix(ycp.d, N_cp); 
 
         % Convert to frequency domain using DFT
-        r.p = 0; %TODO: This line is missing some code!
-        r.d = 0; %TODO: This line is missing some code!
+        r.p = fft(y.p, N); 
+        r.d = fft(y.d, N); 
         symbs.rx_pe = r.d; % Store symbols for later
         
         % Esimate channel
-        H = 0; %TODO: This line is missing some code!
+        H = r.p ./ x.p;
 
         % Remove effect of channel on the data package by equalization.
-        r_eq = 0; %TODO: This line is missing some code!
+        r_eq =  r.d ./ H; 
 
         symbs.rx_e = r_eq; %Store symbols for later
 
@@ -550,7 +550,7 @@ student_id = 20000212;
         evm = norm(x.d - r_eq)/sqrt(N);
 
         % Convert the recieved symsbols to bits
-        rx = 0; %TODO: This line is missing some code!
+         rx = qpsk2bits(r_eq); 
 
         % Calculate the bit error rate (BER).
         % This indicates the relative number of bit errors.
