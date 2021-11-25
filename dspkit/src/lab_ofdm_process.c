@@ -331,7 +331,7 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 	
 	/* TODO: Add code from here...*/
 	//NULL checks
-	if (prxMes==NULL|prxPilot==NULL||ptxPilot==NULL||pEqualized==NULL||hhat_conj==NULL){
+	if (prxMes==NULL||prxPilot==NULL||ptxPilot==NULL||pEqualized==NULL||hhat_conj==NULL){
 		return;
 	}
 
@@ -339,7 +339,6 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 	float* conj = calloc(2 * length, sizeof(float));
 	if (conj==NULL){
 		free(conj);
-		conj == NULL;
 		return;
 	}
 
@@ -352,7 +351,6 @@ void ofdm_conj_equalize(float * prxMes, float * prxPilot,
 	arm_cmplx_mult_cmplx_f32(prxMes, hhat_conj, pEqualized, length);
 
 	free(conj);
-	conj = NULL;
 
 	/* ...to here */
 #endif
