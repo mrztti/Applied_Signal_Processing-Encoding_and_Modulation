@@ -251,7 +251,14 @@ void ofdm_demodulate(float * pSrc, float * pRe, float * pIm,  float f, int lengt
 	DO_OFDM_DEMODULATE();
 #else
 	/* TODO: Add code from here... */
-
+	int i;
+	float inc,omega = 0;
+	inc = -2*f*M_PI;
+	for(i=0; i< length; i++ ){
+		pRe[i] = pSrc[i]*arm_cos_f32(omega)
+		pIm[i] = pSrc[i]*arm_sin_f32(omega)
+		omega += inc;
+	}
 	/* ...to here */
 #endif
 }
