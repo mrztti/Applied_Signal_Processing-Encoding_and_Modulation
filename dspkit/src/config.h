@@ -91,7 +91,7 @@
 #ifdef SYSMODE_OFDM
 #define MP3_DATA_NONE   // For OFDM lab, no music signal is used, so load a dummy file to reduce the upload time.
 #else
-#define MP3_DATA_FLY    // For other operation modes, load some useful audio signal
+#define MP3_DATA_CRAZY    // For other operation modes, load some useful audio signal
 #endif
 #endif
 

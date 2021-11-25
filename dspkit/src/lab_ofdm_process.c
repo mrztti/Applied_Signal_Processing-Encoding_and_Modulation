@@ -280,6 +280,16 @@ void cnvt_re_im_2_cmplx( float * pRe, float * pIm, float * pCmplx, int length ){
 #else
 	/* TODO: Add code from here... */
 
+	//Null checks
+	if(pRe == NULL || pIm == NULL || pCmplx == NULL){
+		return;
+	}
+
+	int i;
+	for(i = 0; i < length; i++){
+		pCmplx[2*i] = pRe[i];
+		pCmplx[2*i + 1] = pIm[i];
+	}
 	/* ...to here */
 #endif
 }
