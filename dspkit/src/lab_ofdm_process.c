@@ -191,7 +191,7 @@ void ofdm_modulate(float * pRe, float * pIm, float* pDst, float f , int length){
 	*/
 	int i;
 	float inc,omega=0;
-	inc = 2*f*M_PI;
+	inc = 2*f*PI;
 	for(i=0; i< length; i++ ){
 		pDst[i] = pRe[i] * arm_cos_f32(omega) - pIm[i] * arm_sin_f32(omega);
 		omega += inc;
@@ -258,7 +258,7 @@ void ofdm_demodulate(float * pSrc, float * pRe, float * pIm,  float f, int lengt
 
 	int i;
 	float omega = 0;
-	float inc = -2 * f * M_PI;
+	float inc = -2 * f * PI;
 	for(i=0; i< length; i++ ){
 		pRe[i] = pSrc[i]*arm_cos_f32(omega);
 		pIm[i] = pSrc[i]*arm_sin_f32(omega);
