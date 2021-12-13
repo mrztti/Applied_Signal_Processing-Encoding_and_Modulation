@@ -55,6 +55,9 @@ static void lab_lms_reset_errlog(void){
 }
 
 float32_t temp[LAB_LMS_TAPS_ONLINE_MAX];
+uint_fast8_t swtchIdx;
+float32_t lmsSwtchBuffer[AUDIO_BLOCKSIZE];
+float32_t xSwtchBuffer[AUDIO_BLOCKSIZE];
 
 #define PRINT_HELPMSG() 																								\
 		printf("Usage guide;\n"																							\
@@ -429,13 +432,56 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	 * doing block_size lms update iterations, i.e. something like:
 	 */
 
-	// Calculate dot products
-	uint16_t n;
-	for(n = 0u; n<block_size; n++){ 
-		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
-		e[n] = x[n] - xhat[n];        
-		arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
-		arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+	if(lms_mode==lms_enbl){
+		uint16_t n;
+		for(n = 0u; n<block_size; n++){ 
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+			e[n] = x[n] - xhat[n];
+		}
+	} else {
+
+		if(lms_taps < 450) // Under 450 use conventional algorithm
+		{
+			// Calculate dot products
+			uint16_t n;
+			for(n = 0u; n<block_size; n++){ 
+				arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+				e[n] = x[n] - xhat[n];        
+				arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
+				arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+			}
+		} else // Above 450, switch to a split algorithm, slower convergence but less intense per cycle
+		{
+			uint16_t chunk_size = block_size /2;
+			if(!swtchIdx)
+			{
+				arm_copy_f32(lms_state, lmsSwtchBuffer, block_size); // Store current state
+				arm_copy_f32(x, xSwtchBuffer, block_size);
+				uint16_t n;
+				float32_t xh;
+				for(n = 0u; n<chunk_size; n++){ 
+					arm_dot_prod_f32(lms_coeffs,lmsSwtchBuffer + n,lms_taps,&xh); 
+					arm_scale_f32(lmsSwtchBuffer + n, 4 * lms_mu * (x[n] - xh), temp, lms_taps);
+					arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+				}
+				swtchIdx = !swtchIdx;
+			} else{
+				uint16_t n;
+				float32_t xh;
+				for(n = chunk_size; n<block_size; n++){ 
+					arm_dot_prod_f32(lms_coeffs,lmsSwtchBuffer + n,lms_taps,&xh);     
+					arm_scale_f32(lmsSwtchBuffer + n, 4 * lms_mu * (xSwtchBuffer[n] - xh), temp, lms_taps);
+					arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+				}
+				swtchIdx = !swtchIdx;
+			}
+			uint16_t n;
+			for(n = 0; n<block_size; n++){
+					arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+					e[n] = x[n] - xhat[n]; 
+				}
+
+		}
 	}
 	 /* ...to here */
 #endif
