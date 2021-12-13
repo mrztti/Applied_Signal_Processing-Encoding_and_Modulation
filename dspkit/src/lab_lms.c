@@ -54,6 +54,8 @@ static void lab_lms_reset_errlog(void){
 	lms_err_buf_time = 0;
 }
 
+float temp[LAB_LMS_TAPS_ONLINE_MAX];
+
 #define PRINT_HELPMSG() 																								\
 		printf("Usage guide;\n"																							\
 			"Press the following keys to change the system behavior\n"													\
@@ -427,13 +429,12 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	 * doing block_size lms update iterations, i.e. something like:
 	 */
 	int n;
-	for(n = 0; n<block_size; n++){ 		   		//Which order should we loop n over? [0, 1, 2, ..., block_size]? [block_size, ..., 1, 0]?
-	    float * y_book = &lms_state[n]; //Here we create a new pointer, which we call y_book, using the notation in the course book. Which index of lms_state should we use to set up y_book?
-		arm_dot_prod_f32(lms_coeffs,y_book,lms_taps,&xhat[n]);             //Here '*' implies the dot product. Either use arm_dot_prod_f32 or use a loop to compute xhat[n]
+	for(n = 0; n<block_size; n++){ //Here we create a new pointer, which we call y_book, using the notation in the course book. Which index of lms_state should we use to set up y_book?
+		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,&xhat[n]);             //Here '*' implies the dot product. Either use arm_dot_prod_f32 or use a loop to compute xhat[n]
 	    e[n] = x[n] - xhat[n];
-		int i;
-		for(i = 0; i<lms_taps; i++)            		//e[n] is a scalar, so do we need to do any looping here?
- 	    	lms_coeffs[i] += 2 * lms_mu * y_book[i] * e[n];      //Use some type of loop to update the vector lms_coeffs with the vector y multiplied by scalars 2, mu, e[n].
+		arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
+		arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+     //Use some type of loop to update the vector lms_coeffs with the vector y multiplied by scalars 2, mu, e[n].
 	}
 	 /* ...to here */
 #endif
