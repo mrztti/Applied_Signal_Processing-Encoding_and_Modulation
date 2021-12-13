@@ -428,14 +428,21 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	 *
 	 * doing block_size lms update iterations, i.e. something like:
 	 */
+
+	// Calculate dot products
 	int n;
-	for(n = 0; n<block_size; n++){ //Here we create a new pointer, which we call y_book, using the notation in the course book. Which index of lms_state should we use to set up y_book?
-		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,&xhat[n]);             //Here '*' implies the dot product. Either use arm_dot_prod_f32 or use a loop to compute xhat[n]
-	    e[n] = x[n] - xhat[n];
+	for(n = 0; n<block_size; n++){ 
+		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+		e[n] = x[n] - xhat[n];        
+	}
+	// arm_sub_f32(x, xhat, e, block_size);
+	n=0;
+	for(n = 0; n<block_size; n++){
 		arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
 		arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+	}		
      //Use some type of loop to update the vector lms_coeffs with the vector y multiplied by scalars 2, mu, e[n].
-	}
+	
 	 /* ...to here */
 #endif
 
