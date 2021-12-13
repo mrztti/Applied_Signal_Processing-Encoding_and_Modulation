@@ -54,7 +54,7 @@ static void lab_lms_reset_errlog(void){
 	lms_err_buf_time = 0;
 }
 
-float temp[LAB_LMS_TAPS_ONLINE_MAX];
+float32_t temp[LAB_LMS_TAPS_ONLINE_MAX];
 
 #define PRINT_HELPMSG() 																								\
 		printf("Usage guide;\n"																							\
@@ -430,8 +430,8 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	 */
 
 	// Calculate dot products
-	int n;
-	for(n = 0; n<block_size; n++){ 
+	uint16_t n;
+	for(n = 0u; n<block_size; n++){ 
 		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
 		e[n] = x[n] - xhat[n];        
 		arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
