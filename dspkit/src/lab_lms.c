@@ -434,15 +434,9 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	for(n = 0; n<block_size; n++){ 
 		arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
 		e[n] = x[n] - xhat[n];        
-	}
-	// arm_sub_f32(x, xhat, e, block_size);
-	n=0;
-	for(n = 0; n<block_size; n++){
 		arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
 		arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
-	}		
-     //Use some type of loop to update the vector lms_coeffs with the vector y multiplied by scalars 2, mu, e[n].
-	
+	}
 	 /* ...to here */
 #endif
 
