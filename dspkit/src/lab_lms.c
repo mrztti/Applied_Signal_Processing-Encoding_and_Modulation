@@ -54,6 +54,8 @@ static void lab_lms_reset_errlog(void){
 	lms_err_buf_time = 0;
 }
 
+float32_t temp[LAB_LMS_TAPS_ONLINE_MAX];
+
 #define PRINT_HELPMSG() 																								\
 		printf("Usage guide;\n"																							\
 			"Press the following keys to change the system behavior\n"													\
@@ -425,15 +427,46 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	/* TODO: Add code from here...
 	 *
 	 * doing block_size lms update iterations, i.e. something like:
-	 * 
-	 * int n;
-	 * for(n <range 0 - block_size>){ 		   		//Which order should we loop n over? [0, 1, 2, ..., block_size]? [block_size, ..., 1, 0]?
-	 *   float * y_book = &lms_state[<some index>]; //Here we create a new pointer, which we call y_book, using the notation in the course book. Which index of lms_state should we use to set up y_book?
-	 *   xhat[n] = lms_coeffs * y_book;             //Here '*' implies the dot product. Either use arm_dot_prod_f32 or use a loop to compute xhat[n]
-	 *   e[n] = x[n] - xhat[n];                		//e[n] is a scalar, so do we need to do any looping here?
-	 *   lms_coeffs += 2 * mu * y_book * e[n];      //Use some type of loop to update the vector lms_coeffs with the vector y multiplied by scalars 2, mu, e[n].
-	 * }
-	 * ...to here */
+	 */
+
+	if(lms_taps < 450) // Under 450 use conventional algorithm
+	{
+		uint16_t n;
+		for(n = 0u; n<block_size; n++){ 
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+			e[n] = x[n] - xhat[n]; // We cannot vectorize this calculation as it depends on the loop
+			arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
+			arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+		}
+	} else // Above 450, switch to a stochastic algorithm, slower convergence but less intense per cycle
+	{
+		
+		// Do stochastic updating
+		// The DSP only supports about 60 update steps per cycle at max taps
+		// => We have to drop some samples, the best way to keep the most information about the signal
+		// is to drop them randomly and keep a group of 60. This is the best trade off between
+		// convergence speed and performance.
+
+		uint16_t i;
+		float32_t xh;
+		// Decrease group size relative to taps, but keep at least 60
+		uint_fast16_t mx = MAX(((LAB_LMS_TAPS_ONLINE_MAX-lms_taps) >> 1), 60); 
+		for(i = 0u; i<=mx; i++){
+			uint_fast16_t n = util_rand_range(0u, block_size, &seed);
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,&xh);
+			arm_scale_f32(lms_state + n, 2 * lms_mu * (x[n] - xh), temp, lms_taps);
+			arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+		}
+
+		uint16_t n;
+		// Calculate output
+		for(n = 0u; n<block_size; n++){ 
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+			e[n] = x[n] - xhat[n];
+		}
+	}
+
+	 /* ...to here */
 #endif
 
 	/* Update lms state, ensure the lms_taps-1 first values correspond to the
