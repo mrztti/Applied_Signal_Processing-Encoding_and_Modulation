@@ -55,9 +55,6 @@ static void lab_lms_reset_errlog(void){
 }
 
 float32_t temp[LAB_LMS_TAPS_ONLINE_MAX];
-uint_fast8_t swtchIdx;
-float32_t lmsSwtchBuffer[AUDIO_BLOCKSIZE];
-float32_t xSwtchBuffer[AUDIO_BLOCKSIZE];
 
 #define PRINT_HELPMSG() 																								\
 		printf("Usage guide;\n"																							\
@@ -432,57 +429,43 @@ void my_lms(float const * y, float const * x, float * xhat, float * e, int block
 	 * doing block_size lms update iterations, i.e. something like:
 	 */
 
-	if(lms_mode==lms_enbl){
+	if(lms_taps < 450) // Under 450 use conventional algorithm
+	{
 		uint16_t n;
+		for(n = 0u; n<block_size; n++){ 
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
+			e[n] = x[n] - xhat[n]; // We cannot vectorize this calculation as it depends on the loop
+			arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
+			arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+		}
+	} else // Above 450, switch to a stochastic algorithm, slower convergence but less intense per cycle
+	{
+		
+		// Do stochastic updating
+		// The DSP only supports about 60 update steps per cycle at max taps
+		// => We have to drop some samples, the best way to keep the most information about the signal
+		// is to drop them randomly and keep a group of 60. This is the best trade off between
+		// convergence speed and performance.
+
+		uint16_t i;
+		float32_t xh;
+		// Decrease group size relative to taps, but keep at least 60
+		uint_fast16_t mx = MAX(((LAB_LMS_TAPS_ONLINE_MAX-lms_taps) >> 1), 60); 
+		for(i = 0u; i<=mx; i++){
+			uint_fast16_t n = util_rand_range(0u, block_size, &seed);
+			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,&xh);
+			arm_scale_f32(lms_state + n, 2 * lms_mu * (x[n] - xh), temp, lms_taps);
+			arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
+		}
+
+		uint16_t n;
+		// Calculate output
 		for(n = 0u; n<block_size; n++){ 
 			arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
 			e[n] = x[n] - xhat[n];
 		}
-	} else {
-
-		if(lms_taps < 450) // Under 450 use conventional algorithm
-		{
-			// Calculate dot products
-			uint16_t n;
-			for(n = 0u; n<block_size; n++){ 
-				arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
-				e[n] = x[n] - xhat[n];        
-				arm_scale_f32(lms_state + n, 2 * lms_mu * e[n], temp, lms_taps);
-				arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
-			}
-		} else // Above 450, switch to a split algorithm, slower convergence but less intense per cycle
-		{
-			uint16_t chunk_size = block_size /2;
-			if(!swtchIdx)
-			{
-				arm_copy_f32(lms_state, lmsSwtchBuffer, block_size); // Store current state
-				arm_copy_f32(x, xSwtchBuffer, block_size);
-				uint16_t n;
-				float32_t xh;
-				for(n = 0u; n<chunk_size; n++){ 
-					arm_dot_prod_f32(lms_coeffs,lmsSwtchBuffer + n,lms_taps,&xh); 
-					arm_scale_f32(lmsSwtchBuffer + n, 4 * lms_mu * (x[n] - xh), temp, lms_taps);
-					arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
-				}
-				swtchIdx = !swtchIdx;
-			} else{
-				uint16_t n;
-				float32_t xh;
-				for(n = chunk_size; n<block_size; n++){ 
-					arm_dot_prod_f32(lms_coeffs,lmsSwtchBuffer + n,lms_taps,&xh);     
-					arm_scale_f32(lmsSwtchBuffer + n, 4 * lms_mu * (xSwtchBuffer[n] - xh), temp, lms_taps);
-					arm_add_f32(lms_coeffs, temp, lms_coeffs, lms_taps);
-				}
-				swtchIdx = !swtchIdx;
-			}
-			uint16_t n;
-			for(n = 0; n<block_size; n++){
-					arm_dot_prod_f32(lms_coeffs,lms_state + n,lms_taps,xhat + n);
-					e[n] = x[n] - xhat[n]; 
-				}
-
-		}
 	}
+
 	 /* ...to here */
 #endif
 
