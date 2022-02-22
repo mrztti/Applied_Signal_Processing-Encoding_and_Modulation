@@ -11,14 +11,4 @@ In many practical scenarios including digital communications and image restorati
 
 ## Part A : Baseband communication
 
-**Tasks to implement:**
-
-- [ ] QPSK coding
-- [ ] (Baseband) channel model
-- [ ] Time domain equalization
-- [ ] OFDM based communication
-- [ ] Cyclic prefix
-- [ ] Equalization with known H(k)
-- [ ] Equalization with unknown H(k)
-
 ## Part B: Interpolation, Modulation, Demodulation and Decimation
